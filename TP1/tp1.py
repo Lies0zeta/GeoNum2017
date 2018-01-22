@@ -55,10 +55,17 @@ def ReadPolygon( filename ) :
 #    point b_i^k from the De Casteljau algorithm.
 #
 def DeCasteljau( BezierPts, k, i, t ) :
-    pass
-    #########
-    ## TODO : Implement the De Casteljau algorithm.
-    #########
+	if(i >= k) :
+		return BezierPts[i]
+	else :
+		nlist = []
+		for width in range(i,k):
+			nlist.append((1-t)*BezierPts[width] + t*BezierPts[width+1])
+		return DeCasteljau(nlist,k-1,i,t)
+
+#########
+## TODO : Implement the De Casteljau algorithm.
+#########
 
 
 #-------------------------------------------------
@@ -79,14 +86,8 @@ def BezierCurve( BezierPts, N ) :
     
     # initialize curvepoints as zeros
     CurvePts = np.zeros([N,2])
-    
-    #########
-    ## TODO : Compute N curve points for t varying uniformly in [0.0,1.0]
-    #########
-    #
-    # hint1:
-    # to generate the uniform sampling of the interval [0.0,1.0] with N elements, use:
-    # >> samples = np.linspace(0.0,1.0,num=N)
+
+    samples = np.linspace(0.0,1.0,num=N)
     #
     
     #
@@ -94,7 +95,8 @@ def BezierCurve( BezierPts, N ) :
     # to access and change i-th row of the matrix CurvePts, use:
     # >> CurvePts[i,:]
     #
-    
+    for x in range(0,N):
+    	CurvePts[x,:] = DeCasteljau(BezierPts, degree, 0, samples[x])
     #
     # hint3:
     # the actual point b_0^degree on the curve is computed by calling DeCasteljau
@@ -156,7 +158,12 @@ if __name__ == "__main__":
         #########
         ## TODO : Compute intermediate polygons b_i^k for k=1,...,degree-1 and i=0,...,degree-k
         #########
-        
+        for k in xrange(1,BezierPts.shape[0]-2):
+        	poly = []
+        	for i in xrange(0,BezierPts.shape[0]-1-k):
+        		poly.append(DeCasteljau( BezierPts, k, i, 0.5 ))
+        	#plt.plot( poly[:,0], poly[:,1], 'bo-' )
+        	print poly
         #########
         ## TODO : Add plt.plot commands to plot the intermediate polygons
         #########

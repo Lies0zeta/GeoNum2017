@@ -106,11 +106,18 @@ def ComputeSplineC1( DataPts ) :
     # BezierPts matrix will contain (2n+1) rows :
     #   n+1 rows for input data and n rows for inner Bezier control pts.
     BezierPts = np.zeros([2*n+1,2])
-    
-    ##
-    ## TODO : Compute BezierPts.
-    ##
-         
+    k = 0
+    BezierPts[k,:] = DataPts[0,:]
+    k+=1
+    BezierPts[k,:] = 0.5*(DataPts[0,:] + DataPts[1,:])
+    k+=1
+    for i in range(1,n):
+        BezierPts[k,:] = DataPts[i,:]
+        k+=1
+        BezierPts[k,:] = 2*DataPts[i,:] - BezierPts[k-2,:]
+        k+=1
+    BezierPts[k,:] = DataPts[n,:] 
+    print(BezierPts) 
     return BezierPts
 
 
@@ -209,18 +216,16 @@ if __name__ == "__main__":
             deg=2
 
         # for each segment : compute and plot
+        pos = 1
         for i in range(0,n) :
-            
-            ##
-            ## TODO : Put the control points of i-th spline segment into iBezierPts.
-            ##        - for a quadratic segment (C1 spline), you need 3 control points.
-            ##        - for a cubic segment (C2 spline), you need 4 control points.
-            ##
-            ##        When it's done, uncomment the following code to compute and plot the segment.
-            ##
-            
-            pass
-            #CurvePts = BezierCurve( iBezierPts, density )
+            iBezierPts = np.zeros([deg+1,2])
+            x = 0
+            for k in range(i,i+deg+1) :
+                iBezierPts[x,:] = BezierPts[k,:]
+                x+=1
+            print(iBezierPts)
+            pos*=deg
+            ##CurvePts = BezierCurve( iBezierPts, density )
             #plt.plot( CurvePts[:,0], CurvePts[:,1], '-', linewidth=3 )
 
 

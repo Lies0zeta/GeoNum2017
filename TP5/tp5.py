@@ -67,19 +67,47 @@ def ReadDatapoints( filename ) :
 #
 #
 def LaneRiesenfeld(X0,degree) :
-    
+
     # number of points
     n = X0.shape[0]
     
     # upsample
     X1 = np.zeros([2*n,2])
+    k=0
+
+    # refining
+    for i in range(0,n) :
+        X1[k,:] = X0[i,:]
+        k+=1
+        X1[k,:] = X0[i,:]
+        k+=1
+    
+    # smoothing
+    for d in range(0,degree) :
+        tmp = np.zeros([2*n,2])
+        for i in range(0,k) :
+            tmp[i,:] = 0.5*(X1[(i%k),:] + X1[((i+1)%k),:])
         
-    ##
-    ## TODO Implement the Lane-Riesenfeld algorithm.
-    ##
+        # replacement
+        X1 = tmp
 
     return X1
 
+
+def LaneRiesenfeld2(X0) :
+    # number of points
+    n = X0.shape[0]
+    
+    # upsample
+    X1 = np.zeros([2*n,2])
+    k=0
+    for i in range(0,n) :
+        X1[k,:] = 3.0/4.0*X0[(i%n),:] + 1.0/4.0*X0[((i+1)%n),:]
+        k+=1
+        X1[k,:] = 1.0/4.0*X0[(i%n),:] + 3.0/4.0*X0[((i+1)%n),:]
+        k+=1
+
+    return X1
 
 #-------------------------------------------------
 # FOURPOINT()
@@ -101,17 +129,32 @@ def LaneRiesenfeld(X0,degree) :
 #
 #
 def FourPoint(X0,degree) :
-    
+
     # number of points
     n = X0.shape[0]
-    
+    print("degree p = "+str(p))
     # upsample
     X1 = np.zeros([2*n,2])
+    k=0
+
+    # refining
+    for i in range(0,n) :
+        X1[k,:] = X0[i,:]
+        k+=1
+        X1[k,:] = 1.0/16.0*(-X0[(i-1)%n,:] + 9*X0[(i%n),:] \
+            + 9*X0[((i+1)%n),:] - X0[((i+2)%n),:])
+        k+=1
     
-    ##
-    ## TODO Implement the 4-point LR scheme.
-    ##
+    # smoothing
+    for d in range(0,degree) :
+        tmp = np.zeros([2*n,2])
+        for i in range(0,k) :
+            tmp[i,:] = 1.0/16.0*(-X1[(i-1)%k,:] + 9*X1[i,:] \
+                + 9*X1[((i+1)%k),:] - X1[((i+2)%k),:])
     
+        # replacement
+        X1 = tmp
+
     return X1
 
 
@@ -141,11 +184,26 @@ def SixPoint(X0,degree) :
     
     # upsample
     X1 = np.zeros([2*n,2])
+    k=0
+
+    # refining
+    for i in range(0,n) :
+        X1[k,:] = X0[i,:]
+        k+=1
+        X1[k,:] = 1.0/256.0*(3*X0[(i-2)%n,:] -25*X0[(i-1)%n,:] + 150*X0[(i%n),:] \
+            + 150*X0[((i+1)%n),:] - 25*X0[((i+2)%n),:] + 3*X0[((i+3)%n),:])
+        k+=1
     
-    ##
-    ## TODO Implement the 6-point LR scheme.
-    ##
+    # smoothing
+    for d in range(0,degree) :
+        tmp = np.zeros([2*n,2])
+        for i in range(0,k) :
+            tmp[i,:] = 1.0/256.0*(3*X1[(i-2)%k,:] -25*X1[(i-1)%k,:] + 150*X1[(i%k),:] \
+                + 150*X1[((i+1)%k),:] - 25*X1[((i+2)%k),:] + 3*X1[((i+3)%k),:])    
     
+        # replacement
+        X1 = tmp
+
     return X1
 
 
@@ -207,14 +265,14 @@ if __name__ == "__main__":
         
         # init subdivided polygon
         X = P
-        
+        print(X.shape[0])
         # iterative subdivision
         for i in range(subdivisions) :
             
             # Lane-Riesenfeld
             if scheme == "LR" :
                 X = LaneRiesenfeld(X,degree)
-                
+                print(X.shape[0])
             # 4-point
             elif scheme == "FP" :
                 X = FourPoint(X,degree)
@@ -252,3 +310,10 @@ if __name__ == "__main__":
         
         # render
         plt.show()        
+        ## 2. When varying the degree with the three subdivision schemes:
+        ##    LR: we observe that the more we increase the degree the more
+        ##        the curve gets further from the polygone, the result curve is Ck-1
+        ##    FP: we observe no changes with the different datasets, the result curve is Ck-1
+        ##    SP: we observe no changes with the different datasets, the result curve is C2
+
+        ## 3. The six-point scheme gives the best result in terms of smoothness (C2 curve).

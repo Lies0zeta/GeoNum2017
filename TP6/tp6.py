@@ -58,18 +58,22 @@ def ReadBezierMesh( datafile ) :
 #
 # Output      :  one coordinate of the surface point S(u,v)
 #
+
+def DeCasteljauC(BezierPts,k,i,t) :
+    if k==0 :
+        return BezierPts[i]
+    else :
+        return (1-t)*DeCasteljauC(BezierPts,k-1,i,t) +\
+          t*DeCasteljauC(BezierPts,k-1,i+1,t)
+
 def DeCasteljau(M,u,v) :
-    
-    #
-    # TODO Implement the De Casteljau algorithm for surfaces.
-    #
-    # hint:
-    # The above signature is for non-recursive implementation.
-    # For recursive implementation, you can use
-    #   def DeCasteljau(M,k,l,i,j,u,v) :
-    #
-    
-    pass
+    m, n = M.shape - np.array([1,1])
+    b = np.zeros([n+1,1])
+
+    for i in range(0,n+1) :
+        b[i,:] = DeCasteljauC(M[i,:],m,0,u)
+
+    return DeCasteljauC(b,n,0,v) 
 
 
 #-------------------------------------------------
@@ -96,14 +100,9 @@ def BezierSurf(M,density) :
     # init surface points
     S = np.zeros([density,density])
 
-    #
-    # TODO Fill surface points.
-    #
-    #
-    # hint:
-    # to generate uniform sampling of the interval [0.0,1.0], use:
-    # >> u = np.linspace(0.0,1.0,num=density)
-    #
+    for u in np.linspace(0.0, 1.0, num=density) :
+        for v in np.linspace(0.0, 1.0, num=density) :
+            S[u,v] = DeCasteljau(M,u,v)
     
     return S
 
@@ -128,9 +127,9 @@ if __name__ == "__main__":
     
     # check if valid datafile
     if not os.path.isfile(filename) :
-        print " error   :  invalid dataname '" + dataname + "'"
-        print " usage   :  tp6.py  [simple,wave,sphere,heart,teapot,teacup,teaspoon]  [density=10]"
-        print " example :  python tp6.py wave 20"
+        print( " error   :  invalid dataname '" + dataname + "'")
+        print (" usage   :  tp6.py  [simple,wave,sphere,heart,teapot,teacup,teaspoon]  [density=10]")
+        print (" example :  python tp6.py wave 20")
         
     else :
         # open the datafile
@@ -146,7 +145,7 @@ if __name__ == "__main__":
         for p in range(numpatch) :
             
             # print patch id
-            print " patch",p+1,"/",numpatch
+            print (" patch",p+1,"/",numpatch)
             
             # read Bezier control points
             Mx, My, Mz = ReadBezierMesh( datafile )
@@ -160,7 +159,7 @@ if __name__ == "__main__":
             viewer.add_patch(Sx,Sy,Sz)
 
         # print final message
-        print " done."
+        print (" done.")
         
         # display the viewer
         viewer.render()

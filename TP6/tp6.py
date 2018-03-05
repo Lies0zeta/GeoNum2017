@@ -58,14 +58,6 @@ def ReadBezierMesh( datafile ) :
 #
 # Output      :  one coordinate of the surface point S(u,v)
 #
-
-def DeCasteljauC(BezierPts,k,i,t) :
-    if k==0 :
-        return BezierPts[i]
-    else :
-        return (1-t)*DeCasteljauC(BezierPts,k-1,i,t) +\
-          t*DeCasteljauC(BezierPts,k-1,i+1,t)
-
 def DeCasteljau(M,u,v) :
     m, n = M.shape - np.array([1,1])
     b = np.zeros([n+1,1])
@@ -75,6 +67,12 @@ def DeCasteljau(M,u,v) :
 
     return DeCasteljauC(b,n,0,v) 
 
+def DeCasteljauC(BezierPts,k,i,t) :
+    if k==0 :
+        return BezierPts[i]
+    else :
+        return (1-t)*DeCasteljauC(BezierPts,k-1,i,t) +\
+          t*DeCasteljauC(BezierPts,k-1,i+1,t)
 
 #-------------------------------------------------
 # BEZIERSURF( ... )
@@ -100,10 +98,13 @@ def BezierSurf(M,density) :
     # init surface points
     S = np.zeros([density,density])
 
+    j=0
     for u in np.linspace(0.0, 1.0, num=density) :
+        i=0
         for v in np.linspace(0.0, 1.0, num=density) :
-            S[u,v] = DeCasteljau(M,u,v)
-    
+            S[i,j] = DeCasteljau(M,u,v)
+            i+=1
+        j+=1
     return S
 
 

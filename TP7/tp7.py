@@ -72,22 +72,22 @@ def ReadBSplineMeshWithKnots( datafile, nurbs=False ) :
 #
 #
 
+def DeBoor( ControlPts, Knots, r, j, t ) :
+    k = Knots.shape[0] - ControlPts.shape[0] -1
+    if r==0 :
+        return ControlPts[j]
+    else :
+        return (1-ComputeW(Knots, j, k-r+1, t )) * \
+        DeBoor( ControlPts, Knots, r-1, j-1, t )  +  \
+        ComputeW(Knots, j, k-r+1, t ) * \
+        DeBoor( ControlPts, Knots, r-1, j, t )
+
 def ComputeW( Knots, i, k, t) :
 
     if Knots[i] < Knots[i+k] :
         return (t - Knots[i])/(Knots[i+k] - Knots[i])
     else:
         return 0
-
-def DeBoor( ControlPts, Knots, r, j, t ) :
-    k = Knots.shape[0] - ControlPts.shape[0] -1
-    if r==0 :
-        return ControlPts[j,:]
-    else :
-        return (1-ComputeW(Knots, j, k-r+1, t )) * \
-        DeBoor( ControlPts, Knots, r-1, j-1, t )  +  \
-        ComputeW(Knots, j, k-r+1, t ) * \
-        DeBoor( ControlPts, Knots, r-1, j, t )
 
 #-------------------------------------------------
 # DEBOORSURF( ... )
@@ -107,18 +107,13 @@ def DeBoor( ControlPts, Knots, r, j, t ) :
 def DeBoorSurf( M, U, V, r, s, i, j, u, v ) :
     m = M.shape[0]-1
     n = M.shape[1]-1
-    k = U.shape[0]-1
-    l = V.shape[0]-1
-    degree_u = k-n-1
-    degree_v = l-m-1
-    print (str(s)+str(m))
 
-    Segment = np.empty([0, 0])
-    for d in range(s,m-s) :
-        print(DeBoor(M[i], V, s, d, v))
-        np.append(Segment, DeBoor(M[i], V, s, d, v))
-    #print (Segment)
-    return 1 #DeBoor(Segment, U, degree_u, j, u)
+    Seg = np.zeros([n+1])
+    k=0
+    for d in range(0,n+1) :
+        Seg[k] = DeBoor(M[:,k], V, s, d, v)
+        k+=1
+    return DeBoor(Seg, U, r, j, u)
 
 #-------------------------------------------------
 if __name__ == "__main__":
@@ -161,7 +156,7 @@ if __name__ == "__main__":
         
         # read control points and knot sequences
         M, U, V = ReadBSplineMeshWithKnots( datafile, nurbs )
-        
+
         # coordinate matrices
         Mx = M[0,:,:]
         My = M[1,:,:]
@@ -181,7 +176,7 @@ if __name__ == "__main__":
         
         # add control net wireframe to the viewer
         viewer.add_patch( Mx, My, Mz, wireframe=True)
-        
+
         m = Mx.shape[0]-1    # m+1 points in u-direction
         n = Mx.shape[1]-1    # n+1 points in v-direction
         

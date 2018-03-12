@@ -68,9 +68,9 @@ def Chaikin( X0 ) :
     X1 = np.zeros([2*n,2])
     k=0
     for i in range(0,n) :
-    	X1[k,:] = 3.0/4.0*X0[(i%n),:] + 1.0/4.0*X0[((i+1)%n),:]
-    	k+=1
-    	X1[k,:] = 1.0/4.0*X0[(i%n),:] + 3.0/4.0*X0[((i+1)%n),:]
+        X1[k,:] = 3.0/4.0*X0[(i%n),:] + 1.0/4.0*X0[((i+1)%n),:]
+        k+=1
+        X1[k,:] = 1.0/4.0*X0[(i%n),:] + 3.0/4.0*X0[((i+1)%n),:]
         k+=1
     return X1
 
@@ -96,9 +96,9 @@ def CornerCutting( X0, a, b ) :
     X1 = np.zeros([2*n,2])        
     k=0
     for i in range(0,n) :
-    	X1[k,:] = (1-a)*X0[(i%n),:] + a*X0[((i+1)%n),:]
-    	k+=1
-    	X1[k,:] = (1-b)*X0[(i%n),:] + b*X0[((i+1)%n),:]
+        X1[k,:] = (1-a)*X0[(i%n),:] + a*X0[((i+1)%n),:]
+        k+=1
+        X1[k,:] = (1-b)*X0[(i%n),:] + b*X0[((i+1)%n),:]
         k+=1
     
     return X1
@@ -125,10 +125,10 @@ def FourPoint( X0, w ) :
     X1 = np.zeros([2*n,2])
     k=0
     for i in range(0,n) :
-    	X1[k,:] = X0[(i%n),:]
-    	k+=1
-    	X1[k,:] = -w*X0[((i-1)%n),:] + (1.0/2.0+w)*X0[(i%n),:] + \
-    				(1.0/2.0+w)*X0[((i+1)%n),:] - w*X0[((i+2)%n),:]
+        X1[k,:] = X0[(i%n),:]
+        k+=1
+        X1[k,:] = -w*X0[((i-1)%n),:] + (1.0/2.0+w)*X0[(i%n),:] + \
+                    (1.0/2.0+w)*X0[((i+1)%n),:] - w*X0[((i+2)%n),:]
         k+=1    
     return X1
 
@@ -159,8 +159,8 @@ if __name__ == "__main__":
     else :
         scheme = "CH"
     if fullname(scheme) == "Invalid" :
-        print " error :  invalid scheme "+scheme
-        print "          should be CH, CC or FP"
+        print (" error :  invalid scheme "+scheme)
+        print ("          should be CH, CC or FP")
         sys.exit(0)
     ###############################
     ## arg 3 : depth of subdivision
@@ -171,23 +171,23 @@ if __name__ == "__main__":
         depth = 3
     
     # output : scheme name and subdivision depth
-    print " "+fullname(scheme)
-    print " depth = " + str(depth)
+    print (" "+fullname(scheme))
+    print (" depth = " + str(depth))
     
     # filename
     filename = DATADIR + dataname + ".data"
     
     # check if valid datafile
     if not os.path.isfile(filename) :
-        print " error :  invalid dataname '" + dataname + "'"
-        print " usage :  python tp4.py  [data=simple,infinity,bone,bunny]  [scheme=CH,CC,FP]  [depth=3]"
+        print (" error :  invalid dataname '" + dataname + "'")
+        print (" usage :  python tp4.py  [data=simple,infinity,bone,bunny]  [scheme=CH,CC,FP]  [depth=3]")
         
     else :
 
         ## (a,b) = (0.1,0.6) (b = a + 1/2)
-       	## we obtain a C1 curve
-       	## (a,b) = (0.1,0.5) (b != a + 1/2)
-       	## we obtain a C0 curve 
+        ## we obtain a C1 curve
+        ## (a,b) = (0.1,0.5) (b != a + 1/2)
+        ## we obtain a C0 curve 
         ## -- Corner cutting
         a = 0.1
         b = 0.5
@@ -207,7 +207,7 @@ if __name__ == "__main__":
             
             # Chaikin
             if scheme == "CH" :
-            	print(SubPts)
+                print(SubPts)
                 SubPts = Chaikin(SubPts)
                 print(SubPts)
             # Corner cutting

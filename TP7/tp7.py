@@ -52,6 +52,44 @@ def ReadBSplineMeshWithKnots( datafile, nurbs=False ) :
     return M, U, V
 
 #-------------------------------------------------
+# DEBOOR( ... )
+# Perform the De Boor's algorithm.
+#
+# Input
+#    ControlPts :  (n+1) x 2 matrix of control points
+#    Knots      :  (m+1) x 1 vector of knots
+#    r          :  upper index of the computed point (depth of the algorithm)
+#    j          :  lower index of the computed point
+#    t          :  curve parameter in [t_i,t_i+1]
+#
+# Output
+#   Point d_j^r from the De Boor algorithm.
+#
+#
+# NOTE :
+#   This specification assumes the algorithm will be performed recursively.
+#   Feel free to modify the signature if you want iterative implementation.
+#
+#
+
+def ComputeW( Knots, i, k, t) :
+
+    if Knots[i] < Knots[i+k] :
+        return (t - Knots[i])/(Knots[i+k] - Knots[i])
+    else:
+        return 0
+
+def DeBoor( ControlPts, Knots, r, j, t ) :
+    k = Knots.shape[0] - ControlPts.shape[0] -1
+    if r==0 :
+        return ControlPts[j,:]
+    else :
+        return (1-ComputeW(Knots, j, k-r+1, t )) * \
+        DeBoor( ControlPts, Knots, r-1, j-1, t )  +  \
+        ComputeW(Knots, j, k-r+1, t ) * \
+        DeBoor( ControlPts, Knots, r-1, j, t )
+
+#-------------------------------------------------
 # DEBOORSURF( ... )
 # Recursive De Boor's algorithm for surfaces.
 #
@@ -67,13 +105,20 @@ def ReadBSplineMeshWithKnots( datafile, nurbs=False ) :
 #   Point d_(i,j)^(r,s) from De Boor's algorithm.
 # 
 def DeBoorSurf( M, U, V, r, s, i, j, u, v ) :
-    
-    ##
-    ## TODO :
-    ## Implement recursive De Boor's algorithm for surfaces.
-    ##
-    
-    pass
+    m = M.shape[0]-1
+    n = M.shape[1]-1
+    k = U.shape[0]-1
+    l = V.shape[0]-1
+    degree_u = k-n-1
+    degree_v = l-m-1
+    print (str(s)+str(m))
+
+    Segment = np.empty([0, 0])
+    for d in range(s,m-s) :
+        print(DeBoor(M[i], V, s, d, v))
+        np.append(Segment, DeBoor(M[i], V, s, d, v))
+    #print (Segment)
+    return 1 #DeBoor(Segment, U, degree_u, j, u)
 
 #-------------------------------------------------
 if __name__ == "__main__":
@@ -103,9 +148,9 @@ if __name__ == "__main__":
     
     # check if valid datafile
     if not os.path.isfile(filename) :
-        print " error   :  invalid dataname '" + dataname + "'"
-        print " usage   :  tp7.py  [simple,torus]  [sampling_density]"
-        print " example :  python tp7.py torus 20"
+        print (" error   :  invalid dataname '" + dataname + "'")
+        print (" usage   :  tp7.py  [simple,torus]  [sampling_density]")
+        print (" example :  python tp7.py torus 20")
         
     else :
         # init Viewer
@@ -185,9 +230,15 @@ if __name__ == "__main__":
                 ##   Uniform sampling of interval [ a, b ] is computed via
                 ##   np.linspace(a,b,num=samples)
                 ##
-                
-                
-                
+                si=0
+                for u in np.linspace(U[i],U[i+1],num=samples) :
+                    sj=0
+                    for v in np.linspace(V[j],V[j+1],num=samples) :
+                        Sx[si,sj] = DeBoorSurf(Mx,U,V,du,dv,i,j,u,v)
+                        Sy[si,sj] = DeBoorSurf(My,U,V,du,dv,i,j,u,v)
+                        Sz[si,sj] = DeBoorSurf(Mz,U,V,du,dv,i,j,u,v)
+                        sj+=1   
+                    si+=1
                 ##
                 ## BONUS TODO :
                 ## NURBS Divide Sx, Sy, Sz by Sw

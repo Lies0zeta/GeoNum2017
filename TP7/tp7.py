@@ -108,12 +108,12 @@ def DeBoorSurf( M, U, V, r, s, i, j, u, v ) :
     m = M.shape[0]-1
     n = M.shape[1]-1
 
-    Seg = np.zeros([n+1])
+    tmp = np.zeros([n+1])
     k=0
     for d in range(0,n+1) :
-        Seg[k] = DeBoor(M[:,k], V, s, d, v)
+        tmp[k] = DeBoor(M[:,k], U, r, i, u)
         k+=1
-    return DeBoor(Seg, U, r, j, u)
+    return DeBoor(tmp, V, s, j, v)
 
 #-------------------------------------------------
 if __name__ == "__main__":
@@ -168,6 +168,9 @@ if __name__ == "__main__":
         # NURBS weights
         if nurbs :
             Mw = M[3,:,:]
+            Mx = np.multiply(Mx,Mw)
+            My = np.multiply(My,Mw)
+            Mz = np.multiply(Mz,Mw)
             ##
             ## BONUS TODO :
             ## NURBS Multiply Mx, My, Mz by Mw
@@ -210,8 +213,8 @@ if __name__ == "__main__":
                 Sx = np.zeros([samples,samples])
                 Sy = np.zeros([samples,samples])
                 Sz = np.zeros([samples,samples])
-                
-                
+                if nurbs :
+                    Sw = np.zeros([samples,samples])
                 ##
                 ## TODO :
                 ## Compute patch points using DeBoorSurf.
@@ -232,6 +235,8 @@ if __name__ == "__main__":
                         Sx[si,sj] = DeBoorSurf(Mx,U,V,du,dv,i,j,u,v)
                         Sy[si,sj] = DeBoorSurf(My,U,V,du,dv,i,j,u,v)
                         Sz[si,sj] = DeBoorSurf(Mz,U,V,du,dv,i,j,u,v)
+                        if nurbs :
+                            Sw[si,sj] = DeBoorSurf(Mw,U,V,du,dv,i,j,u,v)
                         sj+=1   
                     si+=1
                 ##
@@ -239,7 +244,10 @@ if __name__ == "__main__":
                 ## NURBS Divide Sx, Sy, Sz by Sw
                 ## HINT : use the function np.divide(A,B)
                 ##
-                
+                if nurbs :
+                    Sx = np.divide(Sx,Sw)
+                    Sy = np.divide(Sy,Sw)
+                    Sz = np.divide(Sz,Sw)
                 # after the Sx, Sy, Sz have been calculated :
                 # add current patch to the viewer
                 viewer.add_patch(Sx,Sy,Sz)

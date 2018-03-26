@@ -19,7 +19,7 @@
 #    Tibor.Stanko at inria.fr
 #
 #-------------------------------------------------
-
+from math import cos, pi
 import sys, os, math
 import numpy as np
 from viewer import Viewer
@@ -71,8 +71,7 @@ def FindEdges(F,e0,e1) :
         
         # compute sum of locations of [e0,e1] in the face F[f]
         s = np.where(F[f]==e0)[0] + np.where(F[f]==e1)[0]
-        print(np.where(F[f]==e0)[0])
-        print(np.where(F[f]==e1)[0])
+        
         # edge 0+1
         if s == 1 :
             eindex[i] = 0
@@ -160,7 +159,7 @@ def InsertMidpoints(V,F) :
             
     # init midpoint indexing
     m=0
-    
+
     # loop over faces
     for i in range(f) :
         
@@ -169,18 +168,14 @@ def InsertMidpoints(V,F) :
             
             # check if -1, otherwise do nothing
             if E[i,2*j+1] == -1 :
-        		
-                #
-                # TODO 
-                #
-                # 1) Put midpoint index m into corresponding locations in matrix E.
-                #
-                # 2) Compute position of the midpoint m.
-                #
-                # Hint : use the function FindEdges
-                #
-                pass
-    
+                edges = FindEdges(F,F[i,j],F[i,(j+1)%3])
+                
+                E[edges[0][0],2*edges[1][0]+1] = m + v
+                E[edges[0][1],2*edges[1][1]+1] = m + v
+                
+                M[m] = 3/8 * (V[F[i,j],:] + V[F[i,(j+1)%3],:]) \
+                + 1/8 * (V[F[edges[0][0],edges[2][0]],:] + V[F[edges[0][1],edges[2][1]],:])
+                m = m + 1
     return M, E
 
 
@@ -199,13 +194,13 @@ def InsertMidpoints(V,F) :
 #      weight Beta(N)
 #
 def Beta(N,Warren) :
-    #
-    # TODO compute the weights Beta.
-    #
-    #
-    # Hint : for Loop's weights, use math.cos and math.pi
-    #
-    return 0
+    if Warren == True :
+        if N > 3 :
+            return 3/(8*N)
+        if N == 3 :
+            return 3/16
+    else :
+        return 1/N * (5/8 - (3/8 + 1/4 * cos(2*pi/N))**2)
     
 
 #-------------------------------------------------
@@ -228,18 +223,11 @@ def RecomputePositions(V,F,Warren) :
     
     # init new positions
     newV = np.zeros(V.shape,dtype=np.float32)
-    
     # update old vertices
     for i in range(v) :
-        #
-        # TODO 
-        #
-        # Recompute positions of old vertices.
-        #
-        # Hint : use the functions GetAdjacentVertices and Beta
-        #
-        pass
-        
+        neighbors = GetAdjacentVertices(F,i)
+        n = len(neighbors)
+        newV[i,:] = (1- n*Beta(n,Warren)) * V[i,:] + np.sum(Beta(n,Warren) * V[neighbors,:], axis=0)
     return newV
 
 
@@ -264,16 +252,16 @@ def LoopSubdivision(V,F,Warren) :
     #
 
     ## 1) insert new vertices : midpoints
-    #M,E = InsertMidpoints(V,F)
+    M,E = InsertMidpoints(V,F)
 
     ## 2) recompute positions of original vertices
-    #nV = RecomputePositions(V,F,Warren)
+    nV = RecomputePositions(V,F,Warren)
     
     ## 3) extract subdivided faces from edge matrix
-    #F = ExtractFaces(E)
+    F = ExtractFaces(E)
     
     ## 4) concatenate original vertices and the midpoints
-    #V = np.concatenate((nV,M),axis=0)
+    V = np.concatenate((nV,M),axis=0)
     
     return V, F
 
@@ -298,9 +286,9 @@ if __name__ == "__main__":
     
     # check if valid datafile
     if not os.path.isfile(filename) :
-        print " error   :  invalid dataname '" + dataname + "'"
-        print " usage   :  tp9.py  [dataname]  [subdivision_depth=2]"
-        print " example :  python tp9.py cube 3"
+        print (" error   :  invalid dataname '" + dataname + "'")
+        print (" usage   :  tp9.py  [dataname]  [subdivision_depth=2]")
+        print (" example :  python tp9.py cube 3")
         
     else :
         # open the datafile
@@ -312,33 +300,27 @@ if __name__ == "__main__":
         # init subdivided mesh
         V = mV
         F = mF
-        print(V)
-        print(F)
-        print(FindEdges(F,0,1)[0])
-        print(FindEdges(F,0,1)[1])
-        print(FindEdges(F,0,1)[2])
-        print(GetAdjacentVertices(F,0))
 
-        # # use Warren's weights?
-        # Warren = False
+        # use Warren's weights?
+        Warren = False
         
-        # print "Loop subdivision..."
-        # print "         #V      #F"
-        # # iterative subdivision
-        # for d in range(depth) :
-        #     print "%3d %7d %7d" % (d,V.shape[0],F.shape[0])
-        #     V,F = LoopSubdivision(V,F,Warren)
-        # print "%3d %7d %7d" % (depth,V.shape[0],F.shape[0])
-        # print "Done."
+        print ("Loop subdivision...")
+        print ("         #V      #F")
+        # iterative subdivision
+        for d in range(depth) :
+            print ("%3d %7d %7d" % (d,V.shape[0],F.shape[0]))
+            V,F = LoopSubdivision(V,F,Warren)
+        print ("%3d %7d %7d" % (depth,V.shape[0],F.shape[0]))
+        print ("Done.")
         
-        # # init Viewer
-        # viewer = Viewer("TP9 : Subdivision Surfaces ["+dataname+"]",[1200,800])
+        # init Viewer
+        viewer = Viewer("TP9 : Subdivision Surfaces ["+dataname+"]",[1200,800])
         
-        # # display control mesh
-        # #viewer.add_mesh(mV,mF,E=None,wireframe=True);
+        # display control mesh
+        #viewer.add_mesh(mV,mF,E=None,wireframe=True);
         
-        # # display subdivision surface
-        # viewer.add_mesh(V,F,E=None,wireframe=False);
+        # display subdivision surface
+        viewer.add_mesh(V,F,E=None,wireframe=False);
         
-        # # display the viewer
-        # viewer.render()
+        # display the viewer
+        viewer.render()

@@ -72,22 +72,22 @@ def ReadBSplineMeshWithKnots( datafile, nurbs=False ) :
 #
 #
 
+def DeBoor( ControlPts, Knots, r, j, t ) :
+    k = Knots.shape[0] - ControlPts.shape[0] -1
+    if r==0 :
+        return ControlPts[j]
+    else :
+        return (1-ComputeW(Knots, j, k-r+1, t )) * \
+        DeBoor( ControlPts, Knots, r-1, j-1, t )  +  \
+        ComputeW(Knots, j, k-r+1, t ) * \
+        DeBoor( ControlPts, Knots, r-1, j, t )
+
 def ComputeW( Knots, i, k, t) :
 
     if Knots[i] < Knots[i+k] :
         return (t - Knots[i])/(Knots[i+k] - Knots[i])
     else:
         return 0
-
-def DeBoor( ControlPts, Knots, r, j, t ) :
-    k = Knots.shape[0] - ControlPts.shape[0] -1
-    if r==0 :
-        return ControlPts[j,:]
-    else :
-        return (1-ComputeW(Knots, j, k-r+1, t )) * \
-        DeBoor( ControlPts, Knots, r-1, j-1, t )  +  \
-        ComputeW(Knots, j, k-r+1, t ) * \
-        DeBoor( ControlPts, Knots, r-1, j, t )
 
 #-------------------------------------------------
 # DEBOORSURF( ... )
@@ -107,18 +107,13 @@ def DeBoor( ControlPts, Knots, r, j, t ) :
 def DeBoorSurf( M, U, V, r, s, i, j, u, v ) :
     m = M.shape[0]-1
     n = M.shape[1]-1
-    k = U.shape[0]-1
-    l = V.shape[0]-1
-    degree_u = k-n-1
-    degree_v = l-m-1
-    print (str(s)+str(m))
 
-    Segment = np.empty([0, 0])
-    for d in range(s,m-s) :
-        print(DeBoor(M[i], V, s, d, v))
-        np.append(Segment, DeBoor(M[i], V, s, d, v))
-    #print (Segment)
-    return 1 #DeBoor(Segment, U, degree_u, j, u)
+    tmp = np.zeros([n+1])
+    k=0
+    for d in range(0,n+1) :
+        tmp[k] = DeBoor(M[:,k], U, r, i, u)
+        k+=1
+    return DeBoor(tmp, V, s, j, v)
 
 #-------------------------------------------------
 if __name__ == "__main__":
@@ -161,7 +156,7 @@ if __name__ == "__main__":
         
         # read control points and knot sequences
         M, U, V = ReadBSplineMeshWithKnots( datafile, nurbs )
-        
+
         # coordinate matrices
         Mx = M[0,:,:]
         My = M[1,:,:]
@@ -173,6 +168,9 @@ if __name__ == "__main__":
         # NURBS weights
         if nurbs :
             Mw = M[3,:,:]
+            Mx = np.multiply(Mx,Mw)
+            My = np.multiply(My,Mw)
+            Mz = np.multiply(Mz,Mw)
             ##
             ## BONUS TODO :
             ## NURBS Multiply Mx, My, Mz by Mw
@@ -181,7 +179,7 @@ if __name__ == "__main__":
         
         # add control net wireframe to the viewer
         viewer.add_patch( Mx, My, Mz, wireframe=True)
-        
+
         m = Mx.shape[0]-1    # m+1 points in u-direction
         n = Mx.shape[1]-1    # n+1 points in v-direction
         
@@ -215,8 +213,8 @@ if __name__ == "__main__":
                 Sx = np.zeros([samples,samples])
                 Sy = np.zeros([samples,samples])
                 Sz = np.zeros([samples,samples])
-                
-                
+                if nurbs :
+                    Sw = np.zeros([samples,samples])
                 ##
                 ## TODO :
                 ## Compute patch points using DeBoorSurf.
@@ -237,6 +235,8 @@ if __name__ == "__main__":
                         Sx[si,sj] = DeBoorSurf(Mx,U,V,du,dv,i,j,u,v)
                         Sy[si,sj] = DeBoorSurf(My,U,V,du,dv,i,j,u,v)
                         Sz[si,sj] = DeBoorSurf(Mz,U,V,du,dv,i,j,u,v)
+                        if nurbs :
+                            Sw[si,sj] = DeBoorSurf(Mw,U,V,du,dv,i,j,u,v)
                         sj+=1   
                     si+=1
                 ##
@@ -244,7 +244,10 @@ if __name__ == "__main__":
                 ## NURBS Divide Sx, Sy, Sz by Sw
                 ## HINT : use the function np.divide(A,B)
                 ##
-                
+                if nurbs :
+                    Sx = np.divide(Sx,Sw)
+                    Sy = np.divide(Sy,Sw)
+                    Sz = np.divide(Sz,Sw)
                 # after the Sx, Sy, Sz have been calculated :
                 # add current patch to the viewer
                 viewer.add_patch(Sx,Sy,Sz)

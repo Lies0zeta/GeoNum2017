@@ -71,7 +71,8 @@ def FindEdges(F,e0,e1) :
         
         # compute sum of locations of [e0,e1] in the face F[f]
         s = np.where(F[f]==e0)[0] + np.where(F[f]==e1)[0]
-        
+        print(np.where(F[f]==e0)[0])
+        print(np.where(F[f]==e1)[0])
         # edge 0+1
         if s == 1 :
             eindex[i] = 0
@@ -168,7 +169,7 @@ def InsertMidpoints(V,F) :
             
             # check if -1, otherwise do nothing
             if E[i,2*j+1] == -1 :
-        
+        		
                 #
                 # TODO 
                 #
@@ -311,27 +312,33 @@ if __name__ == "__main__":
         # init subdivided mesh
         V = mV
         F = mF
+        print(V)
+        print(F)
+        print(FindEdges(F,0,1)[0])
+        print(FindEdges(F,0,1)[1])
+        print(FindEdges(F,0,1)[2])
+        print(GetAdjacentVertices(F,0))
+
+        # # use Warren's weights?
+        # Warren = False
         
-        # use Warren's weights?
-        Warren = False
+        # print "Loop subdivision..."
+        # print "         #V      #F"
+        # # iterative subdivision
+        # for d in range(depth) :
+        #     print "%3d %7d %7d" % (d,V.shape[0],F.shape[0])
+        #     V,F = LoopSubdivision(V,F,Warren)
+        # print "%3d %7d %7d" % (depth,V.shape[0],F.shape[0])
+        # print "Done."
         
-        print "Loop subdivision..."
-        print "         #V      #F"
-        # iterative subdivision
-        for d in range(depth) :
-            print "%3d %7d %7d" % (d,V.shape[0],F.shape[0])
-            V,F = LoopSubdivision(V,F,Warren)
-        print "%3d %7d %7d" % (depth,V.shape[0],F.shape[0])
-        print "Done."
+        # # init Viewer
+        # viewer = Viewer("TP9 : Subdivision Surfaces ["+dataname+"]",[1200,800])
         
-        # init Viewer
-        viewer = Viewer("TP9 : Subdivision Surfaces ["+dataname+"]",[1200,800])
+        # # display control mesh
+        # #viewer.add_mesh(mV,mF,E=None,wireframe=True);
         
-        # display control mesh
-        #viewer.add_mesh(mV,mF,E=None,wireframe=True);
+        # # display subdivision surface
+        # viewer.add_mesh(V,F,E=None,wireframe=False);
         
-        # display subdivision surface
-        viewer.add_mesh(V,F,E=None,wireframe=False);
-        
-        # display the viewer
-        viewer.render()
+        # # display the viewer
+        # viewer.render()
